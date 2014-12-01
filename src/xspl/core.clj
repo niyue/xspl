@@ -4,6 +4,20 @@
   (:require [clojure.tools.logging :as log])
   (:require [org.httpkit.client :as http-kit]))
 
+(defn splunk-built-in-commands
+  "Return a set containg all splunk built-in commands"
+  []
+  #{"accum" "addinfo" "addtotals" "amodel" "analyzefields" "anomalies" "anomalousvalue" "append" "appendcols" "appendpipe"
+    "arules" "associate" "audit" "bucket" "chart" "cluster" "collect" "contingency" "convert" "correlate"
+    "crawl" "da" "dbinspect" "dedup" "delete" "delta" "diff" "erex" "eval" "eventcount"
+    "eventstats" "extract" "fields" "filldown" "fillnull" "format" "gauge" "gentimes" "geostats" "head"
+    "input" "inputcsv" "inputlookup" "iplocation" "join" "kmeans" "kvform" "loadjob" "localize" "localop"
+    "lookup" "makecontinuous" "makemv" "map" "metadata" "multikv" "mvcombine" "mvexpand" "nomv" "outlier"
+    "outputcsv" "outputlookup" "outputtext" "overlap" "predict" "rangemap" "rare" "regex" "relevancy" "reltime"
+    "rename" "replace" "return" "reverse" "rex" "savedsearch" "search" "searchtxn" "selfjoin" "sendemail"
+    "set" "sichart" "sirare" "sistats" "sitimechart" "sitop" "sort" "spath" "stats" "strcat"
+    "streamstats" "table" "tail" "timechart" "top" "transaction" "trendline" "typeahead" "typelearner" "typer"
+    "uniq" "untable" "where" "x11" "xmlkv" "xyseries"})
 
 (defn load-searches-list
   "Load saved searches list from a path"
@@ -34,14 +48,40 @@
   (log/info "Parse commands from search string " search)
   (let [with-leading-pipe? (.startsWith search "|")
         full-search (if with-leading-pipe? search (str "| search " search))
-        get-command (fn [pipe] (first (string/split pipe #" ")))]
-    (map #(get-command (string/trim %))
+        get-command (fn [pipe] (first (string/split pipe #" ")))
+        built-in-commands (splunk-built-in-commands)
+        normalize-command (fn [cmd] (cond
+                                      (built-in-commands cmd) cmd
+                                      (.startsWith cmd "`") "search_macro"
+                                      :else "custom_command"))]
+    (map #(normalize-command (get-command (string/trim %)))
          (filter (complement string/blank?) (string/split full-search #"\|")))))
 
-(defn fetch-all-commands
-  "Fetch all saved searches from a list, parse them and get all search commands used"
+(defn fetch-all-searches
+  "Fetch all searches from a list, parse them and get all searches used"
   [path]
   (doall
     (let [confs (load-searches-list path)
-          get-all-commands (fn [conf] (mapcat get-commands (get-searches (:body (get-saved-searches-conf conf)))))]
-      (mapcat get-all-commands confs))))
+          get-conf-searches (fn [conf-url] (get-searches (:body (get-saved-searches-conf conf-url))))]
+    (mapcat get-conf-searches confs))))
+
+(sort-by second > (into [] {:a 3 :b 2}))
+
+(defn analyze-searches
+  "Analyze all searches/commands and their usages"
+  [searches]
+  (log/info "Analyzing " (count searches) " searches...")
+  (let [commands (mapcat get-commands searches)
+        commands-map (group-by identity commands)
+        commands-usage (zipmap (keys commands-map) (map count (vals commands-map)))
+        sorted-usage (sort-by second > (into [] commands-usage))]
+    { :searches-count (count searches)
+      :command-types-count (count commands-map)
+      :total-commands-count (count commands)
+      :usage sorted-usage }))
+
+
+
+
+
+
