@@ -65,8 +65,6 @@
           get-conf-searches (fn [conf-url] (get-searches (:body (get-saved-searches-conf conf-url))))]
     (mapcat get-conf-searches confs))))
 
-(sort-by second > (into [] {:a 3 :b 2}))
-
 (defn analyze-searches
   "Analyze all searches/commands and their usages"
   [searches]
@@ -79,9 +77,6 @@
       :command-types-count (count commands-map)
       :total-commands-count (count commands)
       :usage sorted-usage }))
-
-
-
 
 
 
