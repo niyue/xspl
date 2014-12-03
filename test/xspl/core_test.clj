@@ -9,8 +9,14 @@
 (deftest get-saved-searches-conf-test
     (is (not (nil? (:body (get-saved-searches-conf "https://raw.githubusercontent.com/niyue/splunking-bitcoin/master/src/vagrant/splunk/apps/bitcoin/local/savedsearches.conf"))))))
 
+(deftest parse-lines-get-searches-test
+  (is (= ["a b c" "l1 l2"] (parse-lines ["a b c" "l1 \\" "l2"]))))
+
 (deftest get-searches-test
   (is (< 1 (count (get-searches (slurp (io/resource "savedsearches.conf")))))))
+
+(deftest multilines-get-searches-test
+  (is (.endsWith (nth (get-searches (slurp (io/resource "savedsearches.conf"))) 2) "difficulty")))
 
 (deftest get-commands-test
   (is (= ["search" "fields" "top"] (get-commands "index=test | fields host, sourcetype | top 10 host"))))

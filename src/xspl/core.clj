@@ -33,11 +33,26 @@
   (let [res (http-kit/get url)]
     @res))
 
+(defn parse-lines
+  "Parse lines read from a multiple line conf file"
+  [lines]
+  (loop [[fl & rs] lines
+         ls []
+         l ""]
+    (if (nil? fl)
+      ls
+      (if (.endsWith fl "\\")
+        (recur rs ls (str l (subs fl 0 (dec (count fl)))))
+        (if (zero? (count l))
+          (recur rs (conj ls fl) "")
+          (recur rs (conj ls (str l fl)) ""))))))
+
 (defn get-searches
   "Parse the saved searches conf file and get all searches defined"
   [conf]
   (log/info "Parse conf file...")
-  (let [lines (string/split-lines conf)
+  (let [all-lines (string/split-lines conf)
+        lines (parse-lines all-lines)
         split (fn [s del] (subs s (inc (.indexOf s del))))]
     (map #(string/trim (split % "="))
          (filter #(.startsWith % "search") (map string/trim lines)))))
