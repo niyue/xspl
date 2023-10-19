@@ -4,7 +4,7 @@ This is a tiny Clojure project used to fetch Splunk saved searches conf files fr
 
 ## Usage
 
-Run `(analyze-searches (fetch-all-searches "searches_list.txt"))` to get all the results. Check out core_test.clj for details.
+Run `lein run` to get all the results. Check out core_test.clj for details.
 
 Once getting all the usage results, use any spreadsheet software/charting tools you can easily visualize the data set like below:
 

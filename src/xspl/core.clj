@@ -54,13 +54,14 @@
   (let [all-lines (string/split-lines conf)
         lines (parse-lines all-lines)
         split (fn [s del] (subs s (inc (.indexOf s del))))]
+    (log/info "conf file lines=" (count lines))
     (map #(string/trim (split % "="))
          (filter #(.startsWith % "search") (map string/trim lines)))))
 
 (defn get-commands
   "Parse the search to get all commands used by this search"
   [search]
-  (log/info "Parse commands from search string " search)
+  ;; (log/info "Parse commands from search string " search)
   (let [with-leading-pipe? (.startsWith search "|")
         full-search (if with-leading-pipe? search (str "| search " search))
         get-command (fn [pipe] (first (string/split pipe #" ")))
@@ -80,6 +81,11 @@
           get-conf-searches (fn [conf-url] (get-searches (:body (get-saved-searches-conf conf-url))))]
     (mapcat get-conf-searches confs))))
 
+(defn usage-to-csv [usage-data]
+  (let [header "Command,Count\n"
+        rows (map (fn [[cmd count]] (str cmd "," count "\n")) usage-data)]
+    (apply str header rows)))
+
 (defn analyze-searches
   "Analyze all searches/commands and their usages"
   [searches]
@@ -93,5 +99,7 @@
       :total-commands-count (count commands)
       :usage sorted-usage }))
 
-
-
+(defn -main [& args]
+  (let [results (analyze-searches (fetch-all-searches "searches_list.txt"))]
+    (log/info "[results]: " results)
+    (log/info "[usage_table]: " (usage-to-csv (:usage results)))))
