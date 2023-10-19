@@ -4,6 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :resource-paths ["resources"]
-  :dependencies [[org.clojure/clojure "1.7.0-alpha2"]
-                 [org.clojure/tools.logging "0.3.1"]
-                 [http-kit "2.1.16"]])
+  :dependencies [[org.clojure/clojure "1.11.1"]
+                 [org.clojure/tools.logging "1.2.4"]
+                 [http-kit "2.7.0"]]
+  :main xspl.core)
